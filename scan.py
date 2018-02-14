@@ -13,9 +13,9 @@ from queue import Queue
 from threading import Thread
 from tabulate import tabulate
 
-errno.errorcode[errno.ECONNREFUSED] = 'Closed'
+errno.errorcode[errno.ECONNREFUSED] = 'No Response'
 errno.errorcode[0] = 'Open'
-errno.errorcode[errno.EAGAIN] = 'No Response'
+errno.errorcode[errno.EAGAIN] = 'Closed'
 errno.errorcode[errno.EHOSTUNREACH] = 'Host Unreachable'
 
 
@@ -35,16 +35,16 @@ class ScanThread(Thread):
 			s.settimeout(1.0)
 			res = s.connect_ex((host, port))
 			try:
-				serv = socket.getservbyport(port)
+				serv = ' '.join((socket.getservbyport(port)).split())
 			except OSError:
 				serv = ""
 			table_data.append([host, port, errno.errorcode[res], serv])
 			if res == errno.EAGAIN:
 				return
 			s.close()
-		except KeyboardInterrupt:
-			print("Error: Ctrl + C encountered. Exiting...")
-			sys.exit()
+		# except KeyboardInterrupt:
+		# 	print("Error: Ctrl + C encountered. Exiting...")
+		# 	sys.exit()
 		except socket.gaierror:
 			print("Error: Host %s not found..." % host)
 			sys.exit()
@@ -55,19 +55,25 @@ class ScanThread(Thread):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Scans ports of given hosts from starting port to ending port excluding the ending port.')
-	parser.add_argument('-H', '--hosts', nargs='+', help='list of hosts to scan', required=True)
-	parser.add_argument('-S', '--start', type=int, help='starting port', default=1)
-	parser.add_argument('-E', '--end', type=int, help='ending port', default=100)
+	parser.add_argument("host", help="host to scan")
+	parser.add_argument('-p', '--ports', help='starting port (inclusive)', default='0:1024')
 	args = vars(parser.parse_args())
-	hosts = args['hosts']
-	ports = list(range(args['start'], args['end']))
+	host = args['host']
+	start, end = tuple(args['ports'].split(':'))
+	start = int(start)
+	end = int(end)
+
+	if end < start:
+		print("Error: End port is lower than start port")
+		sys.exit()
+	
+	ports = list(range(int(start), int(end)+1))
 
 	table_data = []
 
 	q = Queue()
-	for hh in hosts:
-		for pp in ports:
-			q.put((hh, pp))
+	for pp in ports:
+		q.put((host, pp))
 
 	n_threads = 30
 	threads = []
