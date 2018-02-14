@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 
 try:
@@ -42,9 +44,9 @@ class ScanThread(Thread):
 			if res == errno.EAGAIN:
 				return
 			s.close()
-		# except KeyboardInterrupt:
-		# 	print("Error: Ctrl + C encountered. Exiting...")
-		# 	sys.exit()
+		except KeyboardInterrupt:
+			print("Error: Ctrl + C encountered. Exiting...")
+			sys.exit()
 		except socket.gaierror:
 			print("Error: Host %s not found..." % host)
 			sys.exit()
