@@ -72,7 +72,7 @@ if __name__ == '__main__':
 	for pp in ports:
 		q.put((host, pp))
 
-	n_threads = 50
+	n_threads = 200
 	threads = []
 
 	for _ in range(n_threads):
